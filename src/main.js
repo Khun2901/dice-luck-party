@@ -40,6 +40,23 @@ function processEvents(events) {
         const tileEl = document.querySelector(`.tile[data-row="${event.row}"][data-col="${event.col}"]`);
         if (tileEl) tileEl.classList.add('animate-flip');
       }, 0);
+
+      // Auto-move logic: after a path card is revealed, if there is exactly 1 valid move, auto-move after 400ms
+      setTimeout(() => {
+        // Only act if it's your turn and phase is playing
+        if (!gameState || !gameState.players || !gameState.players[gameState.currentPlayerIndex]) return;
+        const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+        if (!currentPlayer.isYou) return;
+        if (gameState.phase !== 'playing') return;
+        if (!gameState.diceResult || gameState.stepsRemaining <= 0) return;
+        if (!gameState.validSubMoves || gameState.validSubMoves.length !== 1) return;
+        const move = gameState.validSubMoves[0];
+        // Send move to server
+        window.dispatchEvent(new CustomEvent('auto-move-trigger'));
+        socket.emit('move-player', { row: move.row, col: move.col, subPos: move.subPos }, (res) => {
+          if (res?.error) showToast(res.error, 'negative');
+        });
+      }, 400);
     }
   }
 }
@@ -183,6 +200,13 @@ function showWaitingRoom() {
       location.reload();
     }
   );
+  // Listen for remove-player event (bubbled from remove button)
+  room.addEventListener('remove-player', (e) => {
+    const { playerId } = e.detail;
+    socket.emit('remove-player', { playerId }, (res) => {
+      if (res?.error) showToast(res.error, 'negative');
+    });
+  });
   app.appendChild(room);
 }
 
@@ -259,7 +283,7 @@ function showGameOver() {
   const medals = ['🥇', '🥈', '🥉', '4️⃣'];
 
   el.innerHTML = `
-    <h2>🎉 Game Over!</h2>
+    <h2>🎉 Congratulations!</h2>
     <div class="winner-name">${winner.name} wins!</div>
     <ul class="final-scores">
       ${sorted
@@ -310,6 +334,12 @@ socket.on('game-events', (events) => {
   if (!queuedStateTimer) {
     queuedStateTimer = setTimeout(processQueuedUpdate, GAME_STATE_WAIT_MS);
   }
+});
+
+// Handle being removed from the room by the host
+socket.on('removed-from-room', () => {
+  alert('You have been removed from the room by the host.');
+  location.reload();
 });
 
 socket.on('disconnect', () => {

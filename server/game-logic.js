@@ -293,11 +293,11 @@ export function findPath(board, sr, sc, tr, tc, maxSteps, boardSize) {
 
 const PLAYER_COLORS = [
   '#FF6B6B', // Red
-  '#4ECDC4', // Teal/Blue
+  '#76EB6A',  // Green 
   '#FFE66D', // Yellow
   '#A78BFA', // Purple
   '#FB923C', // Orange
-  '#F472B6'  // Pink
+  '#e361dcff'  // Pink
 ];
 
 export class GameState {
@@ -340,16 +340,24 @@ export class GameState {
   removePlayer(id) {
     const idx = this.players.findIndex(p => p.id === id);
     if (idx === -1) return;
-    this.players[idx].connected = false;
-
-    // If all disconnected, game over
-    if (this.players.every(p => !p.connected)) {
-      this.phase = 'ended';
-    }
-
-    // If it was the current player's turn, advance
-    if (this.phase === 'playing' && this.currentPlayerIndex === idx) {
-      this.advanceTurn();
+    if (this.phase === 'waiting') {
+      // In lobby, actually remove the player from the array (free the seat)
+      this.players.splice(idx, 1);
+      // If host left, assign new host
+      if (id === this.hostId && this.players.length > 0) {
+        this.hostId = this.players[0].id;
+      }
+    } else {
+      // In-game, just mark as disconnected
+      this.players[idx].connected = false;
+      // If all disconnected, game over
+      if (this.players.every(p => !p.connected)) {
+        this.phase = 'ended';
+      }
+      // If it was the current player's turn, advance
+      if (this.phase === 'playing' && this.currentPlayerIndex === idx) {
+        this.advanceTurn();
+      }
     }
   }
 

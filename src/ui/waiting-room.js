@@ -3,30 +3,34 @@ export function renderWaitingRoom(roomCode, players, hostId, myId, isHost, onSta
   const el = document.createElement('div');
   el.className = 'glass-panel waiting-room';
 
-  const maxPlayers = 4;
+  const maxPlayers = 6;
   const slots = [];
-  for (let i = 0; i < maxPlayers; i++) {
-    if (i < players.length) {
-      const p = players[i];
-      const tags = [];
-      if (p.id === hostId) tags.push('<span class="player-tag host">Host</span>');
-      if (p.id === myId) tags.push('<span class="player-tag you">You</span>');
-      const disconnectStyle = p.connected ? '' : 'opacity: 0.4;';
-      slots.push(`
-        <li class="player-item" style="${disconnectStyle}">
-          <span class="player-dot" style="background: ${p.color}; color: ${p.color};"></span>
-          <span class="player-name">${p.name}${!p.connected ? ' (disconnected)' : ''}</span>
-          ${tags.join('')}
-        </li>
-      `);
-    } else {
-      slots.push(`
-        <li class="player-item empty-slot">
-          <span class="player-dot" style="background: rgba(255,255,255,0.1);"></span>
-          <span class="player-name">Waiting for player...</span>
-        </li>
-      `);
+  // Always fill player slots from the top, then fill the rest with empty slots
+  for (let i = 0; i < players.length; i++) {
+    const p = players[i];
+    const tags = [];
+    if (p.id === hostId) tags.push('<span class="player-tag host">Host</span>');
+    if (p.id === myId) tags.push('<span class="player-tag you">You</span>');
+    let removeBtn = '';
+    if (isHost && p.id !== hostId) {
+      removeBtn = `<button class="remove-player-btn" data-player-id="${p.id}" title="Remove player" style="background:none;border:none;cursor:pointer;padding:0 0 0 8px;"><span style="color:#e53935;font-size:1.3em;vertical-align:middle;">🗑️</span></button>`;
     }
+    slots.push(`
+      <li class="player-item">
+        <span class="player-dot" style="background: ${p.color}; color: ${p.color};"></span>
+        <span class="player-name">${p.name}</span>
+        ${tags.join('')}
+        ${removeBtn}
+      </li>
+    `);
+  }
+  for (let i = players.length; i < maxPlayers; i++) {
+    slots.push(`
+      <li class="player-item empty-slot">
+        <span class="player-dot" style="background: rgba(255,255,255,0.1);"></span>
+        <span class="player-name">Waiting for player...</span>
+      </li>
+    `);
   }
 
   el.innerHTML = `
@@ -44,6 +48,17 @@ export function renderWaitingRoom(roomCode, players, hostId, myId, isHost, onSta
 
   if (isHost) {
     el.querySelector('#start-btn')?.addEventListener('click', onStart);
+    // Add event listeners for remove buttons
+    el.querySelectorAll('.remove-player-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const playerId = btn.getAttribute('data-player-id');
+        const confirmRemove = confirm('Remove this player from the room?');
+        if (confirmRemove) {
+          // Emit a custom event for removal, to be handled in main.js
+          el.dispatchEvent(new CustomEvent('remove-player', { detail: { playerId }, bubbles: true }));
+        }
+      });
+    });
   }
   el.querySelector('#leave-btn').addEventListener('click', onLeave);
 

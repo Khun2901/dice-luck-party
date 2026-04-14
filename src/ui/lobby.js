@@ -4,7 +4,7 @@ export function renderLobby(onCreateRoom, onJoinRoom) {
   el.className = 'glass-panel lobby';
   el.innerHTML = `
     <h1 class="lobby-title">🎲 Dice Luck Party</h1>
-    <p class="lobby-subtitle">Roll, reveal, and race to victory!</p>
+    <p class="lobby-subtitle">Roll, reveal, and race to victory! <span style="font-size:0.9em;color:var(--text-secondary)">(Up to 6 players)</span></p>
     <p class="lobby-subtitle-small">(Inspired from "Card Party: Mario Party 5")</p>
     <div class="lobby-actions" style="margin-bottom: 40px;">
       <input type="text" class="input" id="player-name" placeholder="Enter your name..." maxlength="16" />

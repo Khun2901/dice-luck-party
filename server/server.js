@@ -28,8 +28,32 @@ function generateRoomCode() {
 // ── Socket.IO Events ─────────────────────────────────────────────
 
 io.on('connection', (socket) => {
-  console.log(`[connect] ${socket.id}`);
   let currentRoom = null;
+  socket.on('remove-player', ({ playerId }, callback) => {
+    const game = rooms.get(currentRoom);
+    if (!game) return callback?.({ error: 'No room' });
+    if (socket.id !== game.hostId) return callback?.({ error: 'Only host can remove players' });
+    if (playerId === game.hostId) return callback?.({ error: 'Cannot remove host' });
+    const playerIdx = game.players.findIndex(p => p.id === playerId);
+    if (playerIdx === -1) return callback?.({ error: 'Player not found' });
+    game.removePlayer(playerId);
+    // Broadcast to all sockets in the room and the removed player
+    const update = {
+      players: game.players.map(p => ({
+        id: p.id,
+        name: p.name,
+        color: p.color,
+        connected: p.connected,
+      })),
+      hostId: game.hostId,
+    };
+    io.to(currentRoom).emit('room-update', update);
+    io.to(playerId).emit('room-update', update); // ensure removed player gets update too
+    callback?.({ success: true });
+    // If the removed player is connected, forcibly disconnect them
+    io.to(playerId).emit('removed-from-room');
+  });
+  console.log(`[connect] ${socket.id}`);
 
   socket.on('create-room', ({ playerName, boardSize }, callback) => {
     const code = generateRoomCode();
