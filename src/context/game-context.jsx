@@ -10,7 +10,6 @@ const initialState = {
   roomPlayers: [],
   roomHostId: null,
   gameState: null,
-  previousGameState: null,
   screen: "lobby", // "lobby" | "waiting" | "game" | "gameover"
 };
 
@@ -49,9 +48,6 @@ function gameReducer(state, action) {
         newState.phase === "ended" ? "gameover" : "game";
       return {
         ...state,
-        previousGameState: state.gameState
-          ? cloneState(state.gameState)
-          : null,
         gameState: newState,
         screen,
       };

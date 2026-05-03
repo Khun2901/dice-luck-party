@@ -12,7 +12,6 @@ export function useSocket() {
   const {
     myId,
     gameState,
-    previousGameState,
     setMyId,
     setRoom,
     updateRoom,
@@ -26,16 +25,11 @@ export function useSocket() {
   const queuedGameEventsRef = useRef(null);
   const queuedStateTimerRef = useRef(null);
   const gameStateRef = useRef(gameState);
-  const previousGameStateRef = useRef(previousGameState);
 
   // Keep refs in sync
   useEffect(() => {
     gameStateRef.current = gameState;
   }, [gameState]);
-
-  useEffect(() => {
-    previousGameStateRef.current = previousGameState;
-  }, [previousGameState]);
 
   // Process events
   const processEvents = useCallback(
@@ -153,9 +147,9 @@ export function useSocket() {
       nextState &&
       events &&
       events.some((ev) => ev.type === "move") &&
-      previousGameStateRef.current
+      gameStateRef.current
     ) {
-      animateMoveSequence(previousGameStateRef.current, nextState, events);
+      animateMoveSequence(gameStateRef.current, nextState, events);
     } else if (nextState) {
       setGameState(nextState);
       if (events) processEvents(events);
@@ -279,7 +273,6 @@ export function useSocket() {
   }, []);
 
   return {
-    socket: socketRef.current,
     createRoom,
     joinRoom,
     startGame,
