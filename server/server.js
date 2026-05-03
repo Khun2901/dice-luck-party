@@ -5,8 +5,16 @@ import { GameState } from './game-logic.js';
 
 const app = express();
 const httpServer = createServer(app);
+const ALLOWED_ORIGINS = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',')
+  : ['http://localhost:3000', 'http://localhost:3001'];
+
 const io = new Server(httpServer, {
-  cors: { origin: '*' },
+  cors: {
+    origin: ALLOWED_ORIGINS,
+    methods: ['GET', 'POST'],
+  },
+  transports: ['websocket', 'polling'],
 });
 
 // ── Room Management ──────────────────────────────────────────────

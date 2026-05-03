@@ -1,7 +1,11 @@
 # Node.js dependencies
 node_modules/
 
-# Vite build output
+# Next.js build output
+.next/
+out/
+
+# Vite build output (legacy)
 dist/
 
 # Logs
@@ -15,6 +19,7 @@ yarn-error.log*
 # Local env files
 .env
 .env.*
+.env.local
 
 # VS Code settings
 .vscode/
@@ -35,3 +40,6 @@ coverage/
 
 # Public build artifacts (if any)
 public/build/
+
+# Next.js
+next-env.d.ts
